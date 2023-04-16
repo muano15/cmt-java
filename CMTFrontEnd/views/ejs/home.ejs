@@ -1,0 +1,202 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script defer src="../models/app.js" type="module"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+    <script src="https://cdn.socket.io/socket.io-3.0.0.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-aFq/bzH65dt+w6FI2ooMVUpc+21e0SRygnTpmBvdBgSdnuTN7QbdgL+OapgHtvPp" crossorigin="anonymous"> <!--used CDN to get bootstrap(for css)-->
+    <title>Conference Management Tool</title> <!--title-->
+</head>
+
+<body style="justify-content: center">
+    <%- include("./partials/nav.ejs") %>
+
+    <div class="container-fluid overflow-hidden text-center m-0 p-0">
+        <div class="row align-items-start h-100">
+
+            <section class="pt-4 bg-primary" style="width: 10%">
+                <div class=" h-100">
+                    <button type="button" class="btn my-2 btn-secondary" data-bs-toggle="modal" data-bs-target="#homeCreateConfModal">new conference</button>
+                    <button type="button" value="<%= userData.userId %>" id="refreshBtn" class="btn my-2 btn-secondary">Refresh</button>
+                </div>
+
+            </section>
+
+            <section class="bg-warning" style="width: 60%">
+                <div class="container mt-5 h-100">
+                    <% for (var conf in userData.userConf) { %>
+                        <div class="row justify-content-center align-content-center" style="height: 160px">
+                            <div class="col-2 py-5 bg-light"><%= userData.userConf[conf].CONF_ID %></div>
+                            <div class="col-5 py-5 bg-success"><%= userData.userConf[conf].CONF_NAME %></div>
+                            <div class="col-3 py-5 bg-danger"><%= userData.userConf[conf].CONF_MODE %></div>
+                        </div>
+                    <% } %>
+                </div>
+            </section>
+
+            <section class="bg-secondary" style="width: 30%">
+                <div class="h-100">
+                    <p>section C</p>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <div class="modal fade modal-lg" id="homeCreateConfModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Modal title</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body" id="homeCreateConfModalBody">
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" id="confname-addon1">Name</span>
+                        <input type="text" id="newConferenceName" class="form-control" placeholder="Conference name..." aria-label="Conferencename" aria-describedby="basic-addon1">
+                    </div>
+
+                    <div class="row justify-content-center text-center mt-3">
+                        <div class="col-5 form-check">
+                            <input class="form-check-input" type="radio" name="newConferenceType" id="newConferenceSB" value="single-blind">
+                            <label class="form-check-label" for="newConferenceSB">Single-blind</label>
+                        </div>
+
+                        <div class="col-5 form-check">
+                            <input class="form-check-input" type="radio" name="newConferenceType" id="newConferenceDB" value="double-blind">
+                            <label class="form-check-label" for="newConferenceDB">Double-blind</label>
+                        </div>
+                    </div>
+
+                    <div class="row justify-content-center mt-3">
+                        <div class="col-2">
+                            <button class="btn btn-primary mt-1" id="addMembersBtn" data-bs-target="#addMembersModal" data-bs-toggle="modal">Add members</button>
+                        </div>
+
+                        <div class="col-10 d-flex justify-content-evenly col-8">
+                            <div class="col text-center bg-info">
+                                <h4>Organisers</h4>
+                                <h5 id="numOfOrganisers">0</h5>
+                            </div>
+                            <div class="col text-center bg-light">
+                                <h4>Areachair</h4>
+                                <h5 id="numOfAreachair">0</h5>
+                            </div>
+                            <div class="col text-center bg-success">
+                                <h4>Reviewer</h4>
+                                <h5 id="numOfReviewers">0</h5>
+                            </div>
+                            <div class="col text-center bg-warning">
+                                <h4>Authors</h4>
+                                <h5 id="numOfAuthors">0</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="closeNewConference()">Close</button>
+                    <button type="button" id="homeCreateConfBtn" class="btn btn-secondary">Create conference</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade modal-lg" id="addMembersModal" aria-hidden="true" data-bs-backdrop="static" aria-labelledby="exampleModalToggleLabel2" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="input-group">
+                        <span class="input-group-text" id="search-addon1">Name</span>
+                        <input type="text" id="memberSearchBar" class="form-control" placeholder="Search for a user..." aria-label="memberSearchBar" aria-describedby="search-addon1">
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <% for (var i = 0; i < allUsers.length; i++){ %>
+                        <div class="bg-info container d-flex border-bottom py-3 my-4">
+                            <div class="col">
+                                <%= allUsers[i].userName %>
+                            </div>
+                            <div class="col">
+                                <%= allUsers[i].userEmail %>
+                            </div>
+                            <div id="thisUserId" class="col">
+                                <%= allUsers[i].userId %>
+                            </div>
+                            <div>
+                                <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
+                                    <div class="btn-group" role="group">
+                                        <i type="button" class="bi bi-plus-circle-fill" id="addMemberOptBtn" data-bs-toggle="dropdown" aria-expanded="false" ></i>
+                                        <ul class="dropdown-menu">
+                                            <li><button class="btn" onclick="addToOrganisers(<%= allUsers[i].userId %>)">Add to organisers</button></li>
+                                            <li><button class="btn" onclick="addToAreachairs(<%= allUsers[i].userId %>)">Add to areachairs</button></li>
+                                            <li><button class="btn" onclick="addToReviewers(<%= allUsers[i].userId %>)">Add to reviewers</button></li>
+                                            <li><button class="btn" onclick="addToAuthors(<%= allUsers[i].userId %>)">Add to authors</button></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <% } %>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="updateCount()" data-bs-toggle="modal" data-bs-target="#homeCreateConfModal">Back</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateCount() {
+            document.querySelector("#numOfOrganisers").innerHTML = JSON.parse(sessionStorage.getItem("organisers")).length
+            document.querySelector("#numOfAreachair").innerHTML = JSON.parse(sessionStorage.getItem("areachairs")).length
+            document.querySelector("#numOfReviewers").innerHTML = JSON.parse(sessionStorage.getItem("reviewers")).length
+            document.querySelector("#numOfAuthors").innerHTML = JSON.parse(sessionStorage.getItem("authors")).length
+        }
+
+        function addToOrganisers(userId)
+        {
+            var organisersArr = JSON.parse(sessionStorage.getItem("organisers"))
+            organisersArr.push(userId)
+            sessionStorage.setItem("organisers", JSON.stringify(organisersArr))
+        }
+        function addToAreachairs(userId)
+        {
+            var areachairsArr = JSON.parse(sessionStorage.getItem("areachairs"))
+            areachairsArr.push(userId)
+            sessionStorage.setItem("areachairs", JSON.stringify(areachairsArr))
+        }
+        function addToReviewers(userId)
+        {
+            var reviewersArr = JSON.parse(sessionStorage.getItem("reviewers"))
+            reviewersArr.push(userId)
+            sessionStorage.setItem("reviewers", JSON.stringify(reviewersArr))
+        }
+        function addToAuthors(userId)
+        {
+            var authorsArr = JSON.parse(sessionStorage.getItem("authors"))
+            authorsArr.push(userId)
+            sessionStorage.setItem("authors", JSON.stringify(authorsArr))
+        }
+        function closeNewConference()
+        {
+            if (!(sessionStorage.getItem('organisers') === null))
+            {
+                document.querySelector("#numOfOrganisers").innerHTML = 0
+                document.querySelector("#numOfAreachair").innerHTML = 0
+                document.querySelector("#numOfReviewers").innerHTML = 0
+                document.querySelector("#numOfAuthors").innerHTML = 0
+
+                sessionStorage.removeItem("organisers")
+                sessionStorage.removeItem("areachairs")
+                sessionStorage.removeItem("reviewers")
+                sessionStorage.removeItem("authors")            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/js/bootstrap.bundle.min.js" integrity="sha384-qKXV1j0HvMUeCBQ+QVp7JcfGl760yU08IQ+GpUo5hlbpg51QRiuqHAJz8+BrxE/N" crossorigin="anonymous"></script>
+
+</body>
+</html>

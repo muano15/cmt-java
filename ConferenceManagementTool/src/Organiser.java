@@ -1,2 +1,2 @@
-public class Organiser extends Role{
+public class Organiser extends Areachair{
 }

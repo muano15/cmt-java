@@ -1,9 +1,13 @@
 import java.sql.*;
 import java.util.ArrayList;
 
-public class Admin extends Role{
+public class Admin extends Organiser{
 
-    public void MakeConference(Conference conference) throws SQLException {
+    int ADMIN_ID;
+    String ADMIN_EMAIL = "";
+    String ADMIN_PWORD = "";
+
+    public static String MakeConference(String confName, String[] organisers, String[] areachairs, String[] reviewers, String[] authors, int confMode) throws SQLException {
         Connection connection = null;
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
@@ -14,31 +18,64 @@ public class Admin extends Role{
             // Sequence of SQL queries
 
             // Query 1: add a new entry to the CONFERENCE table and retrieve the CONF_ID
-            String sqlQuery1 = "insert into conference(CONF_NAME) values(?);";
+            String sqlQuery1 = "insert into CONFERENCE(CONF_NAME, CONF_MODE) values(?, ?);";
             preparedStatement = connection.prepareStatement(sqlQuery1);
-            preparedStatement.setString(1, conference.CONF_NAME);
+            preparedStatement.setString(1, confName);
+            preparedStatement.setInt(2, confMode);
             preparedStatement.executeUpdate();
 
-            String sqlQuery2 = " select * from conference where CONF_NAME = ?;";
+            String sqlQuery2 = " select * from CONFERENCE where CONF_NAME = ?;";
             preparedStatement = connection.prepareStatement(sqlQuery2);
-            preparedStatement.setString(1, conference.CONF_NAME);
+            preparedStatement.setString(1, confName);
             resultSet = preparedStatement.executeQuery();
 
-            int confId = 1;
+            int confId = -1;
             while (resultSet.next()) {
                 confId = resultSet.getInt("CONF_ID");
             }
 
-            // Query 2: add the participants to their corresponding tables
-            for (int i = 0; i < conference.organisers.size(); i++) {
-                String sqlQuery3 = "insert into conf_organiser values( ?, ?);";
+            // Query 2: add the organisers
+            for (int i = 0; i < organisers.length; i++) {
+                String sqlQuery3 = "insert into CONF_ROLE values( ?, ?, ?);";
                 preparedStatement = connection.prepareStatement(sqlQuery3);
                 preparedStatement.setInt(1, confId);
-                preparedStatement.setInt(2, conference.organisers.get(i).USER_ID);
+                preparedStatement.setInt(2, Integer.parseInt(organisers[i]));
+                preparedStatement.setString(3, "organiser");
                 preparedStatement.executeUpdate();
             }
 
-            System.out.println("Conference created");
+            // Query 3: add the areachairs
+            for (int i = 0; i < areachairs.length; i++) {
+                String sqlQuery3 = "insert into CONF_ROLE values( ?, ?, ?);";
+                preparedStatement = connection.prepareStatement(sqlQuery3);
+                preparedStatement.setInt(1, confId);
+                preparedStatement.setInt(2, Integer.parseInt(areachairs[i]));
+                preparedStatement.setString(3, "areachair");
+                preparedStatement.executeUpdate();
+            }
+
+            // Query 4: add the reviewers
+            for (int i = 0; i < reviewers.length; i++) {
+                String sqlQuery3 = "insert into CONF_ROLE values( ?, ?, ?);";
+                preparedStatement = connection.prepareStatement(sqlQuery3);
+                preparedStatement.setInt(1, confId);
+                preparedStatement.setInt(2, Integer.parseInt(reviewers[i]));
+                preparedStatement.setString(3, "reviewer");
+                preparedStatement.executeUpdate();
+            }
+
+            // Query 5: add the authors
+            for (int i = 0; i < authors.length; i++) {
+                String sqlQuery3 = "insert into CONF_ROLE values( ?, ?, ?);";
+                preparedStatement = connection.prepareStatement(sqlQuery3);
+                preparedStatement.setInt(1, confId);
+                preparedStatement.setInt(2, Integer.parseInt(authors[i]));
+                preparedStatement.setString(3, "author");
+                preparedStatement.executeUpdate();
+            }
+
+//            System.out.println("Conference created");
+            return "conference created";
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -47,78 +84,84 @@ public class Admin extends Role{
             preparedStatement.close();
             connection.close();
         }
+
+        return "conference not created";
     }
-    public void DeleteConference(int confId) throws SQLException {
-        Connection connection = null;
-        PreparedStatement preparedStatement = null;
-
-        try {
-            connection = MakeSqlConnection();
-
-            // Query1: delete all the rows that have no dependents first
-            String sqlQuery1 = "delete from conf_organiser where CONF_ID = ?;";
-            preparedStatement = connection.prepareStatement(sqlQuery1);
-            preparedStatement.setInt(1, confId);
-            preparedStatement.executeUpdate();
-
-            String sqlQuery2 = "delete from conference where CONF_ID = ?;";
-            preparedStatement = connection.prepareStatement(sqlQuery2);
-            preparedStatement.setInt(1, confId);
-            preparedStatement.execute();
-
-            System.out.println("Conference deleted");
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            preparedStatement.close();
-            connection.close();
-        }
-    }
-
-    public void RemoveOrganiser(int conf_id, int organiser_id) throws SQLException {
-        Connection connection = null;
-        PreparedStatement preparedStatement = null;
-
-        try {
-            connection = MakeSqlConnection();
-
-            String sqlQuery = "delete from conf_organiser where CONF_ID = ? and USER_ID = ?;";
-            preparedStatement = connection.prepareStatement(sqlQuery);
-            preparedStatement.setInt(1, conf_id);
-            preparedStatement.setInt(2, organiser_id);
-            preparedStatement.execute();
-
-            System.out.println("Organiser removed");
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            preparedStatement.close();
-            connection.close();
-        }
+    public static void DeleteConference(int confId) throws SQLException {
+        System.out.println("DeleteConference() is successful");
+//        Connection connection = null;
+//        PreparedStatement preparedStatement = null;
+//
+//        try {
+//            connection = MakeSqlConnection();
+//
+//            // Query1: delete all the rows that have no dependents first
+//            String sqlQuery1 = "delete from conf_organiser where CONF_ID = ?;";
+//            preparedStatement = connection.prepareStatement(sqlQuery1);
+//            preparedStatement.setInt(1, confId);
+//            preparedStatement.executeUpdate();
+//
+//            String sqlQuery2 = "delete from conference where CONF_ID = ?;";
+//            preparedStatement = connection.prepareStatement(sqlQuery2);
+//            preparedStatement.setInt(1, confId);
+//            preparedStatement.execute();
+//
+//            System.out.println("Conference deleted");
+//
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//        } finally {
+//            preparedStatement.close();
+//            connection.close();
+//        }
     }
 
-    public void AddOrganiser(int conf_id, int organiser_id) throws SQLException {
-        Connection connection = null;
-        PreparedStatement preparedStatement = null;
-
-        try {
-            connection = MakeSqlConnection();
-
-            String sqlQuery = "insert into conf_organiser(conf_id, user_id) values(?, ?)";
-            preparedStatement = connection.prepareStatement(sqlQuery);
-            preparedStatement.setInt(1, conf_id);
-            preparedStatement.setInt(2, organiser_id);
-            preparedStatement.execute();
-
-            System.out.println("Organiser added");
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            preparedStatement.close();
-            connection.close();
-        }
+    public static void RemoveOrganiser(int conf_id, int organiser_id) throws SQLException {
+        System.out.println("RemoveOrganiser() is successfull");
+//        Connection connection = null;
+//        PreparedStatement preparedStatement = null;
+//
+//        try {
+//            connection = MakeSqlConnection();
+//
+//            String sqlQuery = "delete from conf_organiser where CONF_ID = ? and USER_ID = ?;";
+//            preparedStatement = connection.prepareStatement(sqlQuery);
+//            preparedStatement.setInt(1, conf_id);
+//            preparedStatement.setInt(2, organiser_id);
+//            preparedStatement.execute();
+//
+//            System.out.println("Organiser removed");
+//
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//        } finally {
+//            preparedStatement.close();
+//            connection.close();
+//        }
     }
+
+    public static void AddOrganiser(int conf_id, int organiser_id) throws SQLException {
+        System.out.println("AddOrganiser() is successful");
+//        Connection connection = null;
+//        PreparedStatement preparedStatement = null;
+//
+//        try {
+//            connection = MakeSqlConnection();
+//
+//            String sqlQuery = "insert into conf_organiser(conf_id, user_id) values(?, ?)";
+//            preparedStatement = connection.prepareStatement(sqlQuery);
+//            preparedStatement.setInt(1, conf_id);
+//            preparedStatement.setInt(2, organiser_id);
+//            preparedStatement.execute();
+//
+//            System.out.println("Organiser added");
+//
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//        } finally {
+//            preparedStatement.close();
+//            connection.close();
+//        }
+    }
+
 }
