@@ -1,4 +1,18 @@
-import { Signup, Login, GetAllUsers, GetUserData, allUsers, MakeCoference} from './gateway.js'
+import {
+    Signup,
+    Login,
+    GetAllUsers,
+    GetUserData,
+    MakeCoference,
+    DeleteConference,
+    RemoveMember,
+    AddMember,
+    UploadFile,
+    DownloadFile,
+    CreateSubmission,
+    SetDueDate
+} from './gateway.js'
+// import {Buffer} from "node:buffer";
 
 const refreshBtn = document.querySelector("#refreshBtn")
 if (refreshBtn){
@@ -6,6 +20,7 @@ if (refreshBtn){
         console.log(refreshBtn.value)
         console.log("at least something worked")
         GetUserData(refreshBtn.value)
+        window.setTimeout(() =>{ window.location.reload() }, 500)
     })
 }
 
@@ -80,9 +95,6 @@ const addMembersBtn = document.querySelector("#addMembersBtn")
 if (addMembersBtn)
 {
     addMembersBtn.addEventListener("click", () => {
-        GetAllUsers()
-        console.log("got all the users")
-        console.log(sessionStorage.getItem('organisers'))
         if (sessionStorage.getItem('organisers') == null)
         {
             console.log("in the sessionStorage loop")
@@ -93,3 +105,150 @@ if (addMembersBtn)
         }
     })
 }
+
+const newConfBtn = document.querySelector("#newConfBtn")
+if (newConfBtn)
+{
+    newConfBtn.addEventListener("click", () => {
+        GetAllUsers()
+    })
+}
+
+const uploadFileBtn = document.querySelector("#uploadFileBtn")
+if (uploadFileBtn)
+{
+    uploadFileBtn.addEventListener("click", (e) => {
+        e.preventDefault()
+
+        let file = document.querySelector("#formFile").files[0]
+
+        const blob = new Blob([file], {type: file.type})
+
+        blob.arrayBuffer().then((arrayBuffer) => {
+            var myUint8Array = new Uint8Array(arrayBuffer)
+
+            var Uint8ArrayString = myUint8Array.toString()
+
+            UploadFile(file.type, Uint8ArrayString)
+        })
+    })
+}
+
+const downloadFileBtn = document.querySelector("#downloadFileBtn")
+if (downloadFileBtn)
+{
+    downloadFileBtn.addEventListener("click", (e) => {
+        e.preventDefault()
+
+        DownloadFile()
+    })
+}
+
+const createSubmissionBtn = document.querySelector("#createSubmissionBtn")
+if (createSubmissionBtn)
+{
+    createSubmissionBtn.addEventListener("click", () => {
+        var submissionAbstract = document.querySelector("#addSubmissionAbstractTextArea").value.toString()
+        var confId = myConfIdVar
+        var userId = myUserIdVar
+
+        console.log(userId)
+        console.log(submissionAbstract)
+
+        CreateSubmission(confId, userId, submissionAbstract)
+    })
+}
+
+const setConfAbstDday = document.querySelector("#setConfAbstDday")
+if (setConfAbstDday)
+{
+    setConfAbstDday.addEventListener("click", () => {
+        const dateInput = document.createElement("div")
+        dateInput.innerHTML =
+            '<div class="m-3 text-center">' +
+                '<div class="row my-3">' +
+                    '<input id="abstDateInput" class="form-control" type="text" placeholder="YYYY-MM-DD" aria-label="default input example">' +
+                '</div>' +
+                '<div class="row my-3 justify-content-center">' +
+                    '<i id="approveAbstDate" class="col-5 bi bi-check-square h2"></i>' +
+                    '<i id="cancelAbstDate" class="col-5 bi bi-x-square h2"></i>' +
+                '</div>' +
+            '</div>'
+
+        document.getElementById("viewConfAbstDday").remove()
+        document.getElementById("setConfAbstDday").remove()
+        document.getElementById("forAbstract").appendChild(dateInput)
+
+        const cancelAbstDate = document.querySelector("#cancelAbstDate")
+        {
+            if (cancelAbstDate)
+            {
+                cancelAbstDate.addEventListener("click", () => {
+                    window.location.reload()
+                })
+            }
+        }
+
+        const approveAbstDate = document.querySelector("#approveAbstDate")
+        {
+            if (approveAbstDate)
+            {
+                approveAbstDate.addEventListener("click", () => {
+                    SetDueDate(myConfIdVar, "abstract", document.querySelector("#abstDateInput").value.toString())
+                })
+            }
+        }
+    })
+}
+
+const setConfPaperDday = document.querySelector("#setConfPaperDday")
+if (setConfPaperDday)
+{
+    setConfPaperDday.addEventListener("click", () => {
+        const dateInput = document.createElement("div")
+        dateInput.innerHTML =
+            '<div class="m-3 text-center">' +
+                '<div class="row my-3">' +
+                    '<input id="paperDateInput" class="form-control" type="text" placeholder="YYYY-MM-DD" aria-label="default input example">' +
+                '</div>' +
+                '<div class="row my-3 justify-content-center">' +
+                    '<i id="approvePaperDate" class="col-5 bi bi-check-square h2"></i>' +
+                    '<i id="cancelPaperDate" class="col-5 bi bi-x-square h2"></i>' +
+                '</div>' +
+            '</div>'
+
+        document.getElementById("viewConfPaperDday").remove()
+        document.getElementById("setConfPaperDday").remove()
+        document.getElementById("forPaper").appendChild(dateInput)
+
+        const cancelPaperDate = document.querySelector("#cancelPaperDate")
+        {
+            if (cancelPaperDate)
+            {
+                cancelPaperDate.addEventListener("click", () => {
+                    window.location.reload()
+                })
+            }
+        }
+
+        const approvePaperDate = document.querySelector("#approvePaperDate")
+        {
+            if (approvePaperDate)
+            {
+                approvePaperDate.addEventListener("click", () => {
+                    SetDueDate(myConfIdVar, "paper", document.querySelector("#paperDateInput").value.toString())
+                })
+            }
+        }
+    })
+}
+
+
+
+
+
+
+
+
+
+

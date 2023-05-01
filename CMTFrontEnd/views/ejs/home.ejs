@@ -18,22 +18,22 @@
 
             <section class="pt-4 bg-primary" style="width: 10%">
                 <div class=" h-100">
-                    <button type="button" class="btn my-2 btn-secondary" data-bs-toggle="modal" data-bs-target="#homeCreateConfModal">new conference</button>
+                    <button id="newConfBtn" type="button" class="btn my-2 btn-secondary" data-bs-toggle="modal" data-bs-target="#homeCreateConfModal">New conference</button>
                     <button type="button" value="<%= userData.userId %>" id="refreshBtn" class="btn my-2 btn-secondary">Refresh</button>
                 </div>
 
             </section>
 
-            <section class="bg-warning" style="width: 60%">
-                <div class="container mt-5 h-100">
+            <section class="bg-light" style="width: 60%">
+                <ul class="list-group list-group-flush container mt-5 h-100">
                     <% for (var conf in userData.userConf) { %>
-                        <div class="row justify-content-center align-content-center" style="height: 160px">
-                            <div class="col-2 py-5 bg-light"><%= userData.userConf[conf].CONF_ID %></div>
-                            <div class="col-5 py-5 bg-success"><%= userData.userConf[conf].CONF_NAME %></div>
-                            <div class="col-3 py-5 bg-danger"><%= userData.userConf[conf].CONF_MODE %></div>
-                        </div>
+                        <li onclick="GetConference(<%= userData.userConf[conf].CONF_ID %>)" class="list-group-item d-flex justify-content-center align-content-center" style="height: 160px">
+                            <div class="col-2 py-5"><%= userData.userConf[conf].CONF_ID %></div>
+                            <div class="col-5 py-5"><%= userData.userConf[conf].CONF_NAME %></div>
+                            <div class="col-3 py-5"><%= userData.userConf[conf].CONF_MODE %></div>
+                        </li>
                     <% } %>
-                </div>
+                </ul>
             </section>
 
             <section class="bg-secondary" style="width: 30%">
@@ -72,7 +72,7 @@
 
                     <div class="row justify-content-center mt-3">
                         <div class="col-2">
-                            <button class="btn btn-primary mt-1" id="addMembersBtn" data-bs-target="#addMembersModal" data-bs-toggle="modal">Add members</button>
+                            <button class="btn btn-primary mt-1" id="addMembersBtn" data-bs-toggle="modal" data-bs-target="#addMembersModal">Add members</button>
                         </div>
 
                         <div class="col-10 d-flex justify-content-evenly col-8">
@@ -105,7 +105,7 @@
     </div>
 
     <div class="modal fade modal-lg" id="addMembersModal" aria-hidden="true" data-bs-backdrop="static" aria-labelledby="exampleModalToggleLabel2" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
                     <div class="input-group">
@@ -129,12 +129,13 @@
                             <div>
                                 <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
                                     <div class="btn-group" role="group">
-                                        <i type="button" class="bi bi-plus-circle-fill" id="addMemberOptBtn" data-bs-toggle="dropdown" aria-expanded="false" ></i>
+                                        <i type="button" class="bi bi-plus-circle-fill h2" id="addMemberOptBtn" data-bs-toggle="dropdown" aria-expanded="false" ></i>
                                         <ul class="dropdown-menu">
                                             <li><button class="btn" onclick="addToOrganisers(<%= allUsers[i].userId %>)">Add to organisers</button></li>
                                             <li><button class="btn" onclick="addToAreachairs(<%= allUsers[i].userId %>)">Add to areachairs</button></li>
                                             <li><button class="btn" onclick="addToReviewers(<%= allUsers[i].userId %>)">Add to reviewers</button></li>
                                             <li><button class="btn" onclick="addToAuthors(<%= allUsers[i].userId %>)">Add to authors</button></li>
+                                            <li><button class="btn" onclick="removeMember(<%= allUsers[i].userId %>)">Remove member</button></li>
                                         </ul>
                                     </div>
                                 </div>
@@ -150,13 +151,28 @@
     </div>
 
     <script>
-        function updateCount() {
+
+        function GetConference(confId, userId)
+        {
+            const clientSocket = io('ws://localhost:8080')
+
+            clientSocket.emit("request message", "null::GetConference::" + confId.toString() + "::null::null")
+
+            clientSocket.emit("userIdConf", <%= userData.userId %>)
+
+            clientSocket.on("confData received", (JSONConfData) => {
+                clientSocket.disconnect()
+                console.log("In the GetConference method")
+                window.open('http://localhost:8081/conference', '_top')
+            })
+        }
+        function updateCount()
+        {
             document.querySelector("#numOfOrganisers").innerHTML = JSON.parse(sessionStorage.getItem("organisers")).length
             document.querySelector("#numOfAreachair").innerHTML = JSON.parse(sessionStorage.getItem("areachairs")).length
             document.querySelector("#numOfReviewers").innerHTML = JSON.parse(sessionStorage.getItem("reviewers")).length
             document.querySelector("#numOfAuthors").innerHTML = JSON.parse(sessionStorage.getItem("authors")).length
         }
-
         function addToOrganisers(userId)
         {
             var organisersArr = JSON.parse(sessionStorage.getItem("organisers"))
@@ -180,6 +196,25 @@
             var authorsArr = JSON.parse(sessionStorage.getItem("authors"))
             authorsArr.push(userId)
             sessionStorage.setItem("authors", JSON.stringify(authorsArr))
+        }
+        function removeMember(userId)
+        {
+            var ssKeys = Object.keys(sessionStorage)
+            console.log(ssKeys)
+            for (var k = 0; k < ssKeys.length; k++) {
+                var myGroup = JSON.parse(sessionStorage.getItem(ssKeys[k]))
+                if (myGroup != null)
+                {
+                    console.log(myGroup)
+                    for (var i = 0; i <= myGroup.length; i++) {
+                        if (myGroup[i] == userId)
+                        {
+                            myGroup.splice(i, 1)
+                            sessionStorage.setItem(ssKeys[k], JSON.stringify(myGroup))
+                        }
+                    }
+                }
+            }
         }
         function closeNewConference()
         {

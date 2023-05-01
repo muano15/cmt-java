@@ -6,7 +6,7 @@ public abstract class Role {
     public int conference;
 
     public static Connection MakeSqlConnection() throws SQLException {
-        String url = "jdbc:mysql://10.0.13.129:3306/cmtdb";
+        String url = "jdbc:mysql://10.0.8.63:3306/cmtdb";
         String username = "muano";
         String password = "52852Kh0Kz!N$";
         Connection connection = DriverManager.getConnection(url, username, password);

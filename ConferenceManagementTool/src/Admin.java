@@ -1,5 +1,4 @@
 import java.sql.*;
-import java.util.ArrayList;
 
 public class Admin extends Organiser{
 
@@ -89,79 +88,80 @@ public class Admin extends Organiser{
     }
     public static void DeleteConference(int confId) throws SQLException {
         System.out.println("DeleteConference() is successful");
-//        Connection connection = null;
-//        PreparedStatement preparedStatement = null;
-//
-//        try {
-//            connection = MakeSqlConnection();
-//
-//            // Query1: delete all the rows that have no dependents first
-//            String sqlQuery1 = "delete from conf_organiser where CONF_ID = ?;";
-//            preparedStatement = connection.prepareStatement(sqlQuery1);
-//            preparedStatement.setInt(1, confId);
-//            preparedStatement.executeUpdate();
-//
-//            String sqlQuery2 = "delete from conference where CONF_ID = ?;";
-//            preparedStatement = connection.prepareStatement(sqlQuery2);
-//            preparedStatement.setInt(1, confId);
-//            preparedStatement.execute();
-//
-//            System.out.println("Conference deleted");
-//
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        } finally {
-//            preparedStatement.close();
-//            connection.close();
-//        }
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+
+        try {
+            connection = MakeSqlConnection();
+
+            // Query1: delete all the rows that have no dependents first
+            String sqlQuery1 = "delete from CONF_ROLE where CONF_ID = ?;";
+            preparedStatement = connection.prepareStatement(sqlQuery1);
+            preparedStatement.setInt(1, confId);
+            preparedStatement.executeUpdate();
+
+            String sqlQuery2 = "delete from CONFERENCE where CONF_ID = ?;";
+            preparedStatement = connection.prepareStatement(sqlQuery2);
+            preparedStatement.setInt(1, confId);
+            preparedStatement.execute();
+
+            System.out.println("Conference deleted");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            preparedStatement.close();
+            connection.close();
+        }
     }
 
-    public static void RemoveOrganiser(int conf_id, int organiser_id) throws SQLException {
+    public static void RemoveMember(int confId, int userId) throws SQLException {
         System.out.println("RemoveOrganiser() is successfull");
-//        Connection connection = null;
-//        PreparedStatement preparedStatement = null;
-//
-//        try {
-//            connection = MakeSqlConnection();
-//
-//            String sqlQuery = "delete from conf_organiser where CONF_ID = ? and USER_ID = ?;";
-//            preparedStatement = connection.prepareStatement(sqlQuery);
-//            preparedStatement.setInt(1, conf_id);
-//            preparedStatement.setInt(2, organiser_id);
-//            preparedStatement.execute();
-//
-//            System.out.println("Organiser removed");
-//
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        } finally {
-//            preparedStatement.close();
-//            connection.close();
-//        }
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+
+        try {
+            connection = MakeSqlConnection();
+
+            String sqlQuery = "delete from conf_organiser where CONF_ID = ? and USER_ID = ?;";
+            preparedStatement = connection.prepareStatement(sqlQuery);
+            preparedStatement.setInt(1, confId);
+            preparedStatement.setInt(2, userId);
+            preparedStatement.execute();
+
+            System.out.println("Organiser removed");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            preparedStatement.close();
+            connection.close();
+        }
     }
 
-    public static void AddOrganiser(int conf_id, int organiser_id) throws SQLException {
-        System.out.println("AddOrganiser() is successful");
-//        Connection connection = null;
-//        PreparedStatement preparedStatement = null;
-//
-//        try {
-//            connection = MakeSqlConnection();
-//
-//            String sqlQuery = "insert into conf_organiser(conf_id, user_id) values(?, ?)";
-//            preparedStatement = connection.prepareStatement(sqlQuery);
-//            preparedStatement.setInt(1, conf_id);
-//            preparedStatement.setInt(2, organiser_id);
-//            preparedStatement.execute();
-//
-//            System.out.println("Organiser added");
-//
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        } finally {
-//            preparedStatement.close();
-//            connection.close();
-//        }
+    public static void AddMember(int confId, int userId, String role) throws SQLException {
+        System.out.println("AddMember() is successful");
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+
+        try {
+            connection = MakeSqlConnection();
+
+            String sqlQuery = "insert into CONF_ROLE(CONF_ID, USER_ID, ROLE) values(?, ?, ?)";
+            preparedStatement = connection.prepareStatement(sqlQuery);
+            preparedStatement.setInt(1, confId);
+            preparedStatement.setInt(2, userId);
+            preparedStatement.setString(3, role);
+            preparedStatement.execute();
+
+            System.out.println("Member added");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            preparedStatement.close();
+            connection.close();
+        }
     }
 
 }

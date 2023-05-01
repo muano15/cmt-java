@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>File Input</title>
+    <script defer src="../models/app.js" type="module"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+    <script src="https://cdn.socket.io/socket.io-3.0.0.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-aFq/bzH65dt+w6FI2ooMVUpc+21e0SRygnTpmBvdBgSdnuTN7QbdgL+OapgHtvPp" crossorigin="anonymous"> <!--used CDN to get bootstrap(for css)-->
+</head>
+<body>
+<!--    <form method="post" action="/sendfile" enctype="multipart/form-data">-->
+    <form>
+        <div class="mb-3">
+            <label for="formFile" class="form-label">Default file input example</label>
+            <input class="form-control" type="file" name="file" id="formFile">
+        </div>
+        <div>
+            <button id="uploadFileBtn" type="submit" class="btn btn-primary mb-3">Upload File</button>
+        </div>
+        <div>
+            <button id="downloadFileBtn" type="submit" class="btn btn-primary mb-3">Downpload File</button>
+        </div>
+    </form>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/js/bootstrap.bundle.min.js" integrity="sha384-qKXV1j0HvMUeCBQ+QVp7JcfGl760yU08IQ+GpUo5hlbpg51QRiuqHAJz8+BrxE/N" crossorigin="anonymous"></script>
+
+</body>
+</html>

@@ -1,10 +1,10 @@
+import org.json.JSONObject;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 
 public class Gateway {
@@ -15,38 +15,25 @@ public class Gateway {
 
         ResultSet resultSet = null; PreparedStatement preparedStatement = null; Connection connection = null;
 
-        try {
-            System.out.println(Authenticate.HashStr("makhokha"));
-            System.out.println(Authenticate.HashStr("pword"));
-            System.out.println(Authenticate.HashStr(""));
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-//        c1ebbee46d8c6128b95feb21c187c2ed2edde97994a9a2bac822f78b71789f29
-//        e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-
         ServerSocket ss = new ServerSocket(13000);
-        System.out.println("Listening on port " + 13000);
-
-//            ServerSocket ss = new ServerSocket(13000);
-//            System.out.println("Listening on port " + 13000);
 
         while (true)
         {
+            System.out.println("\n Waiting for connection");
             Socket soc = ss.accept();
-            System.out.println("TCP connection with streams.js established");
+            System.out.println("TCP connection with servers.js established");
 
             inputStreamReader = new InputStreamReader(soc.getInputStream()); outputStreamWriter = new OutputStreamWriter(soc.getOutputStream()); bufferedReader = new BufferedReader(inputStreamReader); bufferedWriter = new BufferedWriter(outputStreamWriter);
 
             try
             {
-                // Reading in the request and processing it
-//                    System.out.println(bufferedReader.readLine());
                 System.out.println("waiting for a request message...");
-                GatewayString gws = gateway.ProcessRequestStr(bufferedReader.readLine());
-
+                String requestMessage = bufferedReader.readLine();
+                GatewayString gws = gateway.ProcessRequestStr(requestMessage);
+                System.out.println("step3: request message received and processed");
 
                 // This is where the business logic will be
+
                 if (gws.action.equals("GetAllUsers"))
                 {
                     bufferedWriter.write("<<" + Role.GetAllUsers());
@@ -57,12 +44,17 @@ public class Gateway {
                     bufferedWriter.write(User.JSONUserData(gws.userId));
                     bufferedWriter.flush();
                 }
+                else if (gws.action.equals("GetConference"))
+                {
+                    bufferedWriter.write(Conference.JSONConferenceData(gws.confId));
+                    bufferedWriter.flush();
+                }
                 else if (gws.action.equals("Login"))
                 {
                     bufferedWriter.write("send pword");
                     bufferedWriter.flush();
                     System.out.println("request for a user pword sent, now waiting...");
-                    
+
                     gws.userPword = Authenticate.HashStr(bufferedReader.readLine());
 
                     bufferedWriter.write(Role.Login(gws.userEmail, gws.userPword));
@@ -74,13 +66,6 @@ public class Gateway {
                     bufferedWriter.flush();
 
                     GatewaySignupString gwss = new GatewaySignupString(bufferedReader.readLine());
-
-//                        System.out.println(
-//                                "\nUsername: " + gwss.userName
-//                                + "\nUser email: " + gwss.userEmail
-//                                + "\nUser password: " + gwss.userHashedPword
-//                                + "\nUser expertise: " + gwss.userExpertise
-//                                + "\nUser domain: " + gwss.userDomain + "\n");
 
                     boolean signupStatus = User.CreateUser(gwss.userName, gwss.userEmail, gwss.userExpertise, gwss.userDomain, gwss.userHashedPword);
 
@@ -95,47 +80,163 @@ public class Gateway {
                         bufferedWriter.flush();
                     }
                 }
-                else if (gws.role.equals("admin"))
+                else if (gws.action.equals("CreateSubmission"))
                 {
-                    if (gws.action.equals("MakeConference"))
+                    bufferedWriter.write("send submission abstract");
+                    bufferedWriter.flush();
+
+                    String submissionAbstract = bufferedReader.readLine();
+
+                    System.out.println(submissionAbstract);
+
+                    boolean result = Author.CreateSubmission(gws.confId, gws.userId, submissionAbstract);
+
+                    System.out.println("the result is " + result);
+
+                    if (result)
                     {
-                        bufferedWriter.write(Admin.MakeConference(gws.confName, gws.confOrganisers, gws.confAreachairs, gws.confReviewers, gws.confAuthors, gws.confMode));
+                        bufferedWriter.write("submission successful");
                         bufferedWriter.flush();
                     }
-                    else if (gws.action.equals("DeleteConference"))
+                    else
                     {
-                        Admin.DeleteConference(gws.confId);
+                        bufferedWriter.write("submission unsuccessful");
+                        bufferedWriter.flush();
                     }
-                    else if (gws.action.equals("RemoveOrganiser"))
+                }
+                else if (gws.action.equals("MakeConference"))
+                {
+                    bufferedWriter.write(Admin.MakeConference(gws.confName, gws.confOrganisers, gws.confAreachairs, gws.confReviewers, gws.confAuthors, gws.confMode));
+                    bufferedWriter.flush();
+                }
+                else if (gws.action.equals("SetDueDate"))
+                {
+                    bufferedWriter.write("for which and date");
+                    bufferedWriter.flush();
+
+                    String forWhichAndDate = bufferedReader.readLine();
+
+                    if (Organiser.SetDueDate(gws.confId, forWhichAndDate.split("@")[0], forWhichAndDate.split("@")[1]))
                     {
-                        for (String org : gws.confOrganisers)
+                        System.out.println("SetDueDate successful");
+                        bufferedWriter.write("due date set successfully");
+                        bufferedWriter.flush();
+                    }
+                    else
+                    {
+                        System.out.println("SetDueDate unsuccessful");
+                        bufferedWriter.write("due date set was unsuccessful");
+                        bufferedWriter.flush();
+                    }
+                }
+                else if (gws.action.equals("DeleteConference"))
+                {
+                    Admin.DeleteConference(gws.confId);
+                }
+                else if (gws.action.equals("RemoveOrganiser"))
+                {
+                    for (String org : gws.confOrganisers)
+                    {
+                        Admin.RemoveMember(gws.confId, Integer.valueOf(org));
+                    }
+                }
+                else if (gws.action.equals("AddOrganiser"))
+                {
+                    for (String org : gws.confOrganisers)
+                    {
+//                        Admin.AddMember(gws.confId, Integer.valueOf(org));
+                    }
+                }
+                else if (gws.action.equals("UploadFile"))
+                {
+                    bufferedWriter.write("send file to be uploaded");
+                    bufferedWriter.flush();
+                    System.out.println("step4: request for file to be uploaded sent, now waiting...");
+
+                    String Uint8ArrayString = bufferedReader.readLine();
+                    System.out.println("step8: received file of size " + Uint8ArrayString.length() + " from the client");
+
+                    String file = "muano.txt";
+                    BufferedWriter fileWriter = new BufferedWriter(new FileWriter(file));
+                    fileWriter.write(Uint8ArrayString);
+                    fileWriter.close();
+                    System.out.println("step9: done writting the bytes to muano.txt file and closing fileWriter");
+
+                    bufferedWriter.write("upload is successful");
+                    bufferedWriter.flush();
+                    System.out.println("step10: notified the server.js that upload was successful");
+                }
+                else if (gws.action.equals("DownloadFile"))
+                {
+                    bufferedWriter.write("what file?");
+                    bufferedWriter.flush();
+                    System.out.println("step4: request for a file name sent, now waiting...");
+
+                    String fileName = bufferedReader.readLine();
+                    System.out.println("step8: received file name is: " + fileName);
+
+                    BufferedReader fileReader = new BufferedReader(new FileReader(fileName));
+                    String Uint8ArrayString = fileReader.readLine();
+                    double Uint8ArrayStringLength = Uint8ArrayString.length();
+                    System.out.println("step9: read the file from " + fileName + " and length is " + Uint8ArrayStringLength);
+
+                    bufferedWriter.write("^^" + String.valueOf((int)Uint8ArrayStringLength) + "^^fileSize");
+                    bufferedWriter.flush();
+                    System.out.println("step10: fileSize to be downloaded has been sent to servers.js to acknowledge");
+
+                    String acknowledgedSize = bufferedReader.readLine();
+                    System.out.println("step12: acknowledgement that fileSize is " + acknowledgedSize + " from servers.js has been received");
+
+                    if (Integer.parseInt(acknowledgedSize) == Uint8ArrayStringLength)
+                    {
+                        System.out.println("step13: the acknowledgedSize == Uint8ArrayStringLength, hence has nothing went wrong");
+                        int batchSize = 8000;
+
+                        double startIndex = 0, finishIndex, numOfLoops;
+                        if (Uint8ArrayStringLength > batchSize)
                         {
-                            Admin.RemoveOrganiser(gws.confId, Integer.valueOf(org));
+                            finishIndex = batchSize;
+                            numOfLoops = Math.ceil(Uint8ArrayStringLength / batchSize);
+                        }
+                        else
+                        {
+                            finishIndex = Uint8ArrayStringLength - 1;
+                            numOfLoops = 1;
+                        }
+
+                        String subString = "";
+                        System.out.println("the numOfLoops is " + numOfLoops);
+                        for (int q = 0; q < (int)numOfLoops; q++)
+                        {
+                            if (Uint8ArrayStringLength - startIndex > batchSize)
+                            {
+                                subString = Uint8ArrayString.substring((int) startIndex,(int) finishIndex);
+                                bufferedWriter.write("^^" + subString);
+                                bufferedWriter.flush();
+                                System.out.println("step14(i):batch# " + q + " has been sent");
+
+                                String state = bufferedReader.readLine();
+                                System.out.println("step14(ii): client says: " + state);
+
+                                startIndex = finishIndex;
+                                finishIndex = finishIndex + batchSize;
+                            }
+                            else
+                            {
+                                subString = Uint8ArrayString.substring((int) startIndex, ((int) Uint8ArrayStringLength));
+                                bufferedWriter.write("^^" + subString);
+                                bufferedWriter.flush();
+                                System.out.println("step15(i): the last batch has been sent");
+
+                                String state = bufferedReader.readLine();
+                                System.out.println("step15(ii): client says: " + state);
+                            }
                         }
                     }
-                    else if (gws.action.equals("AddOrganiser"))
+                    else
                     {
-                        for (String org : gws.confOrganisers)
-                        {
-                            Admin.AddOrganiser(gws.confId, Integer.valueOf(org));
-                        }
+                        System.out.println("Something deep went wrong");
                     }
-                }
-                else if (gws.role.equals("organiser"))
-                {
-
-                }
-                else if (gws.role.equals("areachair"))
-                {
-
-                }
-                else if (gws.role.equals("reviewer"))
-                {
-
-                }
-                else if (gws.role.equals("Author"))
-                {
-
                 }
                 else
                 {
@@ -145,12 +246,12 @@ public class Gateway {
             catch (Exception e)
             {
                 e.printStackTrace();
-
             }
             finally
             {
                 bufferedReader.close(); bufferedWriter.close(); inputStreamReader.close(); outputStreamWriter.close();
                 soc.close();
+                System.out.println("Socket is closing");
             }
         }
 
@@ -164,10 +265,10 @@ public class Gateway {
         int confId; /* OR */ String confName;
         String role;
         /* This */ String userPword; /* is for the case where the action is Login or Sigup */
-        String[] confOrganisers;
-        String[] confAreachairs;
-        String[] confReviewers;
-        String[] confAuthors;
+        String[] confOrganisers = {};
+        String[] confAreachairs = {};
+        String[] confReviewers = {};
+        String[] confAuthors = {};
         int confMode;
     }
     public static class GatewaySignupString
@@ -201,6 +302,7 @@ public class Gateway {
         GatewayString gatewayString = new GatewayString();
 
         String[] strArr = reqStr.split("::");
+
 
         // SECTION 1 - index 0 = useremail | userid | username
         if (strArr[0].contains("@"))
